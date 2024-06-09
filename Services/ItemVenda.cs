@@ -1,18 +1,20 @@
-﻿namespace SistemaVendas.Services
+﻿using System;
+
+namespace SistemaVendas.Services
 {
     public class ItemVenda
     {
         private static int proximoId = 1;
 
         public int Id { get; set; }
-        public Produto Produto { get; set; }
-        public int Quantidade { get; set; }
+        public Produto Produto { get; private set; }
+        public int Quantidade { get; private set; }
 
-        public ItemVenda(Produto produto, int Quantidade) 
+        public ItemVenda(Produto produto, int quantidade)
         {
             this.Id = proximoId++;
             this.Produto = produto;
-            this.Quantidade = Quantidade;
+            this.Quantidade = quantidade;
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace SistemaVendas.Services
+﻿using System;
+
+namespace SistemaVendas.Services
 {
     public class Produto
     {
@@ -9,12 +11,12 @@
         public double Preco { get; set; }
         public int QtdEstoque { get; set; }
 
-        public Produto(string Nome, double Preco, int QtdEstoque)
+        public Produto(string nome, double preco, int qtdEstoque)
         {
             this.Id = proximoId++;
-            this.Nome = Nome;
-            this.Preco = Preco;
-            this.QtdEstoque = QtdEstoque;
+            this.Nome = nome;
+            this.Preco = preco;
+            this.QtdEstoque = qtdEstoque;
         }
     }
 }

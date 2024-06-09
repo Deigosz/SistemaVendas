@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading; // Adicionando o namespace para Thread.Sleep
+using System.Threading;
 using System.Globalization;
 using System.Drawing;
 using SistemaVendas.Services;
@@ -11,10 +11,14 @@ namespace ConsoleMenuSistema
     public class Menu
     {
         private List<Produto> listaProdutos;
+        private List<Venda> vendasRegistradas;
+        private Venda venda;
 
         public Menu(string nomguia)
         {
             listaProdutos = new List<Produto>();
+            vendasRegistradas = new List<Venda>(); // Inicializa a lista de vendas registradas
+            venda = new Venda(DateTime.Now);
             for (; ; )
             {
                 Console.Clear();
@@ -22,7 +26,8 @@ namespace ConsoleMenuSistema
                 MostrarLogo();
                 MontarOpcoes("1", "Cadastrar Produto");
                 MontarOpcoes("2", "Listar Produtos");
-                MontarOpcoes("3", "Item Venda");
+                MontarOpcoes("3", "Pedidos");
+                MontarOpcoes("4", "Vendas");
                 MontarOpcoes("0", "Sair");
 
                 Console.Write("\nSelecione uma Opção: ");
@@ -30,42 +35,54 @@ namespace ConsoleMenuSistema
 
                 if (Opcao == "1")
                 {
-                    string NomeProduto;
-                    double Preco;
-                    int QtdEstoque;
-
                     Console.Write("Digite o nome do Produto: ");
-                    NomeProduto = Console.ReadLine();
+                    string nomeProduto = Console.ReadLine();
 
                     Console.Write("Digite o preço do Produto: ");
-                    Preco = double.Parse(Console.ReadLine(), CultureInfo.InvariantCulture);
+                    double precoProduto;
+                    while (!double.TryParse(Console.ReadLine(), NumberStyles.Currency, CultureInfo.InvariantCulture, out precoProduto))
+                    {
+                        Console.WriteLine("Preço inválido. Por favor, digite um número válido.");
+                        Console.Write("Digite o preço do Produto: ");
+                    }
 
                     Console.Write("Digite a quantidade em Estoque: ");
-                    QtdEstoque = Convert.ToInt32(Console.ReadLine());
+                    int qtdEstoque;
+                    while (!int.TryParse(Console.ReadLine(), out qtdEstoque) || qtdEstoque < 0)
+                    {
+                        Console.WriteLine("Quantidade inválida. Por favor, digite um número inteiro não negativo.");
+                        Console.Write("Digite a quantidade em Estoque: ");
+                    }
 
-                    Produto produto = new Produto(NomeProduto, Preco, QtdEstoque);
+                    Produto produto = new Produto(nomeProduto, precoProduto, qtdEstoque);
                     listaProdutos.Add(produto);
 
                     Console.WriteLine("Produto cadastrado com sucesso!");
                     Console.WriteLine();
                 }
+
                 else if (Opcao == "2")
                 {
                     Console.WriteLine("\nLista de Produtos: ");
                     Console.WriteLine();
-                    foreach (var produto in listaProdutos)
+                    if (listaProdutos.Count == 0)
                     {
-                        Console.WriteLine($"Id: {produto.Id}, Nome: {produto.Nome},\nPreço: {produto.Preco:c}, Estoque: {produto.QtdEstoque}\n",Color.GreenYellow);
+                        Console.WriteLine("Não há produtos cadastrados.");
                     }
-
-                    Console.WriteLine();
+                    else
+                    {
+                        foreach (var produto in listaProdutos)
+                        {
+                            Console.WriteLine($"Id: {produto.Id}, Nome: {produto.Nome}, Preço: {produto.Preco:c}, Estoque: {produto.QtdEstoque}\n", Color.GreenYellow);
+                        }
+                    }
                     Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
                     Console.WriteLine();
                     Console.ReadKey();
                 }
                 else if (Opcao == "3")
-                { 
-                    if(listaProdutos.Count == 0)
+                {
+                    if (listaProdutos.Count == 0)
                     {
                         Console.WriteLine("Não há produtos cadastrados.");
                         Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
@@ -73,29 +90,61 @@ namespace ConsoleMenuSistema
                         continue;
                     }
 
-                    
                     Console.WriteLine("Lista de Produtos Disponíveis para Venda: \n");
                     foreach (var produto in listaProdutos)
                     {
-                        Console.WriteLine($"Id: {produto.Id}, Nome: {produto.Nome},Preço: {produto.Preco:c}, Estoque: {produto.QtdEstoque}\n", Color.GreenYellow);
+                        Console.WriteLine($"Id: {produto.Id}, Nome: {produto.Nome}, Preço: {produto.Preco:c}, Estoque: {produto.QtdEstoque}\n", Color.GreenYellow);
                     }
                     Console.WriteLine();
 
                     Console.Write("\nSelecione o número do produto que deseja adicionar à venda (ou digite 0 para cancelar): ");
-                    int IdProdutoItemVenda = Convert.ToInt32(Console.ReadLine());
+                    int idProdutoItemVenda;
+                    while (!int.TryParse(Console.ReadLine(), out idProdutoItemVenda) || idProdutoItemVenda < 0 || idProdutoItemVenda > listaProdutos.Count)
+                    {
+                        Console.WriteLine("ID inválido. Por favor, selecione um ID válido ou 0 para cancelar.");
+                        Console.Write("\nSelecione o número do produto que deseja adicionar à venda (ou digite 0 para cancelar): ");
+                    }
 
-                    if (IdProdutoItemVenda == 0)
+                    if (idProdutoItemVenda == 0)
                     {
                         Console.WriteLine("Operação cancelada.");
                         Thread.Sleep(1500);
                         continue;
                     }
 
-                    Console.Write("\nInfome a quantidade à ser vendida do produto: ");
-                    int QuantidadeASerVendida = Convert.ToInt32(Console.ReadLine());
+                    Console.Write("\nInforme a quantidade a ser vendida do produto: ");
+                    int quantidadeASerVendida;
+                    while (!int.TryParse(Console.ReadLine(), out quantidadeASerVendida) || quantidadeASerVendida <= 0)
+                    {
+                        Console.WriteLine("Quantidade inválida. Por favor, digite um número inteiro positivo.");
+                        Console.Write("\nInforme a quantidade a ser vendida do produto: ");
+                    }
 
-                    Produto produtoSelecionado = listaProdutos[IdProdutoItemVenda - 1];
-                    ItemVenda novoItemVenda = new ItemVenda(produtoSelecionado, QuantidadeASerVendida);
+                    Produto produtoSelecionado = listaProdutos[idProdutoItemVenda - 1];
+                    ItemVenda novoItemVenda = new ItemVenda(produtoSelecionado, quantidadeASerVendida);
+
+                    venda.AdicionarItem(novoItemVenda, quantidadeASerVendida);
+
+                    Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
+                    Console.WriteLine();
+                    Console.ReadKey();
+                }
+
+                else if (Opcao == "4")
+                {
+                    List<Venda> vendas = Venda.ObterTodasAsVendas();
+                    if (vendas.Count == 0)
+                    {
+                        Console.WriteLine("Não há vendas registradas.");
+                    }
+                    else
+                    {
+                        Console.WriteLine("\nLista de Vendas: ");
+                        foreach (var venda in vendas)
+                        {
+                            Console.WriteLine($"Id: {venda.Id}, Data: {venda.Data}, Total: {venda.Total:c}");
+                        }
+                    }
 
                     Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
                     Console.WriteLine();
