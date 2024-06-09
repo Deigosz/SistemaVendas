@@ -22,7 +22,8 @@ namespace ConsoleMenuSistema
                 MostrarLogo();
                 MontarOpcoes("1", "Cadastrar Produto");
                 MontarOpcoes("2", "Listar Produtos");
-                MontarOpcoes("3", "Sair");
+                MontarOpcoes("3", "Item Venda");
+                MontarOpcoes("0", "Sair");
 
                 Console.Write("\nSelecione uma Opção: ");
                 string Opcao = Console.ReadLine();
@@ -63,6 +64,45 @@ namespace ConsoleMenuSistema
                     Console.ReadKey();
                 }
                 else if (Opcao == "3")
+                { 
+                    if(listaProdutos.Count == 0)
+                    {
+                        Console.WriteLine("Não há produtos cadastrados.");
+                        Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
+                        Console.ReadKey();
+                        continue;
+                    }
+
+                    
+                    Console.WriteLine("Lista de Produtos Disponíveis para Venda: \n");
+                    foreach (var produto in listaProdutos)
+                    {
+                        Console.WriteLine($"Id: {produto.Id}, Nome: {produto.Nome},Preço: {produto.Preco:c}, Estoque: {produto.QtdEstoque}\n", Color.GreenYellow);
+                    }
+                    Console.WriteLine();
+
+                    Console.Write("\nSelecione o número do produto que deseja adicionar à venda (ou digite 0 para cancelar): ");
+                    int IdProdutoItemVenda = Convert.ToInt32(Console.ReadLine());
+
+                    if (IdProdutoItemVenda == 0)
+                    {
+                        Console.WriteLine("Operação cancelada.");
+                        Thread.Sleep(1500);
+                        continue;
+                    }
+
+                    Console.Write("\nInfome a quantidade à ser vendida do produto: ");
+                    int QuantidadeASerVendida = Convert.ToInt32(Console.ReadLine());
+
+                    Produto produtoSelecionado = listaProdutos[IdProdutoItemVenda - 1];
+                    ItemVenda novoItemVenda = new ItemVenda(produtoSelecionado, QuantidadeASerVendida);
+
+                    Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
+                    Console.WriteLine();
+                    Console.ReadKey();
+                }
+
+                else if (Opcao == "0")
                 {
                     Console.WriteLine("Saindo...");
                     Thread.Sleep(1500);
