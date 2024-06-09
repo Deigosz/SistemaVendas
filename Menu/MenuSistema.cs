@@ -17,7 +17,7 @@ namespace ConsoleMenuSistema
         public Menu(string nomguia)
         {
             listaProdutos = new List<Produto>();
-            vendasRegistradas = new List<Venda>(); // Inicializa a lista de vendas registradas
+            vendasRegistradas = new List<Venda>();
             venda = new Venda(DateTime.Now);
             for (; ; )
             {
@@ -125,11 +125,102 @@ namespace ConsoleMenuSistema
 
                     venda.AdicionarItem(novoItemVenda, quantidadeASerVendida);
 
+                    Console.WriteLine("Deseja finalizar a compra e realizar o pagamento? (S/N)");
+                    string opcaoFinalizar = Console.ReadLine().ToUpper();
+
+                    if (opcaoFinalizar == "S")
+                    {
+                        if (venda.Itens.Count == 0)
+                        {
+                            Console.WriteLine("Não há itens na venda. Operação Cancelada!");
+                            Thread.Sleep(1500);
+                            continue;
+                        }
+
+                        double totalVenda = venda.Total;
+                        Console.WriteLine($"Total da Venda: {totalVenda:c}");
+
+                        Console.WriteLine("Selecione o método de pagamento:");
+                        Console.WriteLine("1. Espécie");
+                        Console.WriteLine("2. Cheque");
+                        Console.WriteLine("3. Cartão");
+                        Console.Write("Opção: ");
+                        string opcaoPagamento = Console.ReadLine();
+
+                        Pagamento pagamento = null;
+
+                        switch (opcaoPagamento)
+                        {
+                            case "1":
+                                Console.Write("Digite a quantia em espécie: ");
+                                double quantia;
+                                while (!double.TryParse(Console.ReadLine(), NumberStyles.Currency, CultureInfo.InvariantCulture, out quantia) || quantia < totalVenda)
+                                {
+                                    Console.WriteLine("Quantia inválida. Por favor, digite um valor válido.");
+                                    Console.Write("Digite a quantia em espécie: ");
+                                }
+                                pagamento = new PagamentoEspecie { Quantia = quantia, Total = totalVenda };
+                                break;
+                            case "2":
+                                Console.Write("Digite o número do cheque: ");
+                                long numeroCheque;
+                                while (!long.TryParse(Console.ReadLine(), out numeroCheque))
+                                {
+                                    Console.WriteLine("Número de cheque inválido. Por favor, digite um número válido.");
+                                    Console.Write("Digite o número do cheque: ");
+                                }
+
+                                Console.Write("Digite a data de depósito do cheque (formato dd/mm/yyyy): ");
+                                DateTime dataDeposito;
+                                while (!DateTime.TryParseExact(Console.ReadLine(), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out dataDeposito))
+                                {
+                                    Console.WriteLine("Data inválida. Por favor, digite a data no formato correto (dd/mm/yyyy).");
+                                    Console.Write("Digite a data de depósito do cheque (formato dd/mm/yyyy): ");
+                                }
+                                pagamento = new PagamentoCheque
+                                {
+                                    Numero = numeroCheque,
+                                    DataDeposito = dataDeposito,
+                                    Total = totalVenda
+                                };
+                                break;
+                            case "3":
+                                Console.Write("Digite os dados da transação do cartão: ");
+                                string dadosTransacao = Console.ReadLine();
+
+                                Console.Write("Digite o resultado da transação (1 para sucesso, 0 para falha): ");
+                                int resultadoTransacao;
+                                while (!int.TryParse(Console.ReadLine(), out resultadoTransacao) || (resultadoTransacao != 0 && resultadoTransacao != 1))
+                                {
+                                    Console.WriteLine("Resultado da transação inválido. Por favor, digite 0 para falha ou 1 para sucesso.");
+                                    Console.Write("Digite o resultado da transação (1 para sucesso, 0 para falha): ");
+                                }
+
+                                pagamento = new PagamentoCartao
+                                {
+                                    DadosTransacao = dadosTransacao,
+                                    ResultadoTransacao = resultadoTransacao,
+                                    Total = totalVenda
+                                };
+                                break;
+                            default:
+                                Console.WriteLine("Opção de pagamento inválida. Operação cancelada.");
+                                Thread.Sleep(1500);
+                                continue;
+                        }
+
+                        if (pagamento != null)
+                        {
+                            venda.RegistrarPagamento(pagamento);
+                            Console.WriteLine("Pagamento realizado com sucesso!");
+                            venda.Paga = true;
+                        }
+                    }
+
                     Console.WriteLine("Pressione qualquer tecla para voltar ao menu...");
                     Console.WriteLine();
                     Console.ReadKey();
                 }
-
                 else if (Opcao == "4")
                 {
                     List<Venda> vendas = Venda.ObterTodasAsVendas();
